@@ -111,20 +111,12 @@
                 });
 
                 // Add category total rows
-                var makananTotalRow = '<tr class="bg-secondary"><td >Total Makanan</td>';
-                var minumanTotalRow = '<tr class="bg-secondary"><td>Total Minuman</td>';
                 var allTotalRow = '<tr class="bg-secondary"><td>Total Keseluruhan</td>';
                 for (var i = 0; i < 12; i++) {
                     var allTotal= Number(minumanTotal[i])+Number(makananTotal[i]);
-                    makananTotalRow += '<td>' + formatRupiah(makananTotal[i]) + '</td>';
-                    minumanTotalRow += '<td>' + formatRupiah(minumanTotal[i]) + '</td>';
                     allTotalRow += '<td>' + formatRupiah(allTotal) + '</td>';
                 }
-                makananTotalRow += '</tr>';
-                minumanTotalRow += '</tr>';
                 allTotalRow += '</tr>';
-                $('#menuTable tbody').append(makananTotalRow);
-                $('#menuTable tbody').append(minumanTotalRow);
                 $('#menuTable tbody').append(allTotalRow);
             }
 
