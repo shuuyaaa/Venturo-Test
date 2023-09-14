@@ -124,56 +124,88 @@ if (isset($_GET['tahun']) && $_GET['tahun'] != "") {
                             </tr>
                         </thead>
                         <tbody>
-                            <?php if (isset($_GET['tahun']) && $_GET['tahun'] != ""): ?>
-                                <tr>
-                                    <td class="table-secondary" colspan="14"><b>Makanan</b></td>
-                                </tr>
-                                <?php
-                                foreach ($menu as $key => $value):
-                                    if ($value['kategori'] === "makanan" || $value['kategori'] === "minuman"):
-                                        ?>
-                                        <tr>
-                                            <td style="text-align: left;">
-                                                <?= $menu[$key]['menu'] ?>
-                                            </td>
-                                            <?php
-                                            foreach ($value['value'] as $kunci => $nilai):
-                                                ?>
-                                                <td style="text-align: right;">
-                                                    <?= $nilai != 0 ? number_format($nilai) : "" ?>
-                                                </td>
-                                                <?php
-                                            endforeach;
+                        
+                        <?php if (isset($_GET['tahun']) && $_GET['tahun'] != ""): ?>
+    <tr>
+        <td class="table-secondary" colspan="14"><b>Makanan</b></td>
+    </tr>
+    <?php
+    foreach ($menu as $key => $value):
+        if ($value['kategori'] === "makanan"):
+            ?>
+            <tr>
+                <td style="text-align: left;">
+                    <?= $menu[$key]['menu'] ?>
+                </td>
+                <?php
+                foreach ($value['value'] as $kunci => $nilai):
+                    ?>
+                    <td style="text-align: right;">
+                        <?= $nilai != 0 ? number_format($nilai) : "" ?>
+                    </td>
+                    <?php
+                endforeach;
+                ?>
 
-                                            ?>
+                <td style="text-align: right;"><b>
+                        <?= number_format($value['totalHarga']) ?>
+                    </b></td>
+            </tr>
+            <?php
+        endif;
+    endforeach;
+    ?>
+    <tr>
+        <td class="table-secondary" colspan="14"><b>Minuman</b></td>
+    </tr>
+    <?php
+    foreach ($menu as $key => $value):
+        if ($value['kategori'] === "minuman"):
+            ?>
+            <tr>
+                <td style="text-align: left;">
+                    <?= $menu[$key]['menu'] ?>
+                </td>
+                <?php
+                foreach ($value['value'] as $kunci => $nilai):
+                    ?>
+                    <td style="text-align: right;">
+                        <?= $nilai != 0 ? number_format($nilai) : "" ?>
+                    </td>
+                    <?php
+                endforeach;
+                ?>
 
-                                            <td style="text-align: right;"><b>
-                                                    <?= number_format($value['totalHarga']) ?>
-                                                </b></td>
-                                        </tr>
-                                        <?php
-                                    endif;
-                                endforeach;
-                                ?>
-                                <tr>
-                                    <td class="table-dark" colspan="1"><b>Total</b></td>
-                                    <?php
-                                    foreach ($monthlyTotals as $total):
-                                        ?>
-                                        <td class="table-dark" style="text-align: right;">
-                                            <b>
-                                                <?= number_format($total) ?>
-                                            </b>
-                                        </td>
-                                        <?php
-                                    endforeach;
-                                    ?>
-                                    <td class="table-dark" style="text-align: right;" colspan="1"><b>
-                                            <?= number_format($yearlyTotal) ?>
-                                        </b></td>
-                                </tr>
-                            <?php else: ?>
-                            <?php endif; ?>
+                <td style="text-align: right;"><b>
+                        <?= number_format($value['totalHarga']) ?>
+                    </b></td>
+            </tr>
+            <?php
+        endif;
+    endforeach;
+    ?>
+    <tr>
+        <td class="table-dark" colspan="1"><b>Total</b></td>
+        <?php
+        foreach ($monthlyTotals as $total):
+            ?>
+            <td class="table-dark" style="text-align: right;">
+                <b>
+                    <?php
+                    // Tambahkan kondisi untuk menampilkan hanya jika total tidak sama dengan 0
+                    echo $total !== 0 ? number_format($total) : "";
+                    ?>
+                </b>
+            </td>
+            <?php
+        endforeach;
+        ?>
+        <td class="table-dark" style="text-align: right;" colspan="1"><b>
+                <?= number_format($yearlyTotal) ?>
+            </b></td>
+    </tr>
+<?php else: ?>
+<?php endif; ?>
                         </tbody>
                     </table>
                 </div>
