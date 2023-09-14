@@ -1,138 +1,185 @@
+<?php
+function fetchMenuData() {
+    return json_decode(file_get_contents("http://tes-web.landa.id/intermediate/menu"), true);
+}
+
+function fetchTransaksiData($tahun) {
+    return json_decode(file_get_contents("http://tes-web.landa.id/intermediate/transaksi?tahun=" . $tahun), true);
+}
+
+function initializeMenuData($menu) {
+    $values = array_fill(0, 12, 0);
+    foreach ($menu as $key => $value) {
+        $menu[$key]['value'] = $values;
+        $menu[$key]['totalHarga'] = 0;
+    }
+    return $menu;
+}
+
+function calculateTotals($menu, $transaksi) {
+    $monthlyTotals = array_fill(0, 12, 0);
+    $yearlyTotal = 0;
+
+    foreach ($transaksi as $key => $value) {
+        $valueTrans = $value;
+        $harga = $value['total'];
+        $dateFormat = DateTime::createFromFormat("Y-m-d", $value['tanggal']);
+        $bulan = $dateFormat->format("n");
+
+        foreach ($menu as $key => $value) {
+            if ($value['menu'] === $valueTrans['menu']) {
+                $menu[$key]['value'][$bulan - 1] += $valueTrans['total'];
+                $menu[$key]['totalHarga'] += $valueTrans['total'];
+            }
+        }
+
+        $monthlyTotals[$bulan - 1] += $valueTrans['total'];
+        $yearlyTotal += $valueTrans['total'];
+    }
+
+    return [$menu, $monthlyTotals, $yearlyTotal];
+}
+
+if (isset($_GET['tahun']) && $_GET['tahun'] != "") {
+    $tahun = $_GET['tahun'];
+    $menu = fetchMenuData();
+    $transaksi = fetchTransaksiData($tahun);
+    $menu = initializeMenuData($menu);
+    list($menu, $monthlyTotals, $yearlyTotal) = calculateTotals($menu, $transaksi);
+}
+?>
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <title>Test Venturo</title>
-    <link rel="stylesheet" href="test.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
-    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js">
-    </script>
+    <title>Vtest</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f0f0;
+        }
+
+        td,
+        th {
+            font-size: 12px;
+        }
+    </style>
 </head>
+
 <body>
-    <div class="card my-2">
-        <div>
-        <h4 class="my-auto">Venturo-Laporan Penjualan</h4>
+    <div class="container-fluid">
+        <div class="card" style="margin: 2rem 0rem;">
+            <div class="card-header">
+                Venturo - Laporan penjualan tahunan per menu
+            </div>
+            <div class="card-body">
+                <form action="" method="get">
+                    <div class="row">
+                        <div class="col-2">
+                            <div class="form-group">
+                                <select id="my-select" class="form-control" name="tahun">
+                                    <option value="">Pilih Tahun</option>
+                                    <option value="2021" <?= isset($_GET['tahun']) && $_GET['tahun'] == '2021' ? 'selected' : '' ?>>2021</option>
+                                    <option value="2022" <?= isset($_GET['tahun']) && $_GET['tahun'] == '2022' ? 'selected' : '' ?>>2022</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <button type="submit" class="btn btn-primary">
+                                Tampilkan
+                            </button>
+                        </div>
+                    </div>
+                </form>
+                <hr>
+                <div class="table-responsive">
+                    <table class="table table-hover table-bordered" style="margin: 0;">
+                        <thead>
+                            <tr class="table-dark">
+                                <th rowspan="2" style="text-align:center;vertical-align: middle;width: 250px;">Menu</th>
+                                <th colspan="12" style="text-align: center;">Periode Pada
+                                    <?= $_GET['tahun'] ?>
+                                </th>
+                                <th rowspan="2" style="text-align:center;vertical-align: middle;width:75px">Total</th>
+                            </tr>
+                            <tr class="table-dark">
+                                <th style="text-align: center;width: 75px;">Jan</th>
+                                <th style="text-align: center;width: 75px;">Feb</th>
+                                <th style="text-align: center;width: 75px;">Mar</th>
+                                <th style="text-align: center;width: 75px;">Apr</th>
+                                <th style="text-align: center;width: 75px;">Mei</th>
+                                <th style="text-align: center;width: 75px;">Jun</th>
+                                <th style="text-align: center;width: 75px;">Jul</th>
+                                <th style="text-align: center;width: 75px;">Ags</th>
+                                <th style="text-align: center;width: 75px;">Sep</th>
+                                <th style="text-align: center;width: 75px;">Okt</th>
+                                <th style="text-align: center;width: 75px;">Nov</th>
+                                <th style="text-align: center;width: 75px;">Des</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <?php if (isset($_GET['tahun']) && $_GET['tahun'] != ""): ?>
+                                <tr>
+                                    <td class="table-secondary" colspan="14"><b>Makanan</b></td>
+                                </tr>
+                                <?php
+                                foreach ($menu as $key => $value):
+                                    if ($value['kategori'] === "makanan" || $value['kategori'] === "minuman"):
+                                        ?>
+                                        <tr>
+                                            <td style="text-align: left;">
+                                                <?= $menu[$key]['menu'] ?>
+                                            </td>
+                                            <?php
+                                            foreach ($value['value'] as $kunci => $nilai):
+                                                ?>
+                                                <td style="text-align: right;">
+                                                    <?= $nilai != 0 ? number_format($nilai) : "" ?>
+                                                </td>
+                                                <?php
+                                            endforeach;
+
+                                            ?>
+
+                                            <td style="text-align: right;"><b>
+                                                    <?= number_format($value['totalHarga']) ?>
+                                                </b></td>
+                                        </tr>
+                                        <?php
+                                    endif;
+                                endforeach;
+                                ?>
+                                <tr>
+                                    <td class="table-dark" colspan="1"><b>Total</b></td>
+                                    <?php
+                                    foreach ($monthlyTotals as $total):
+                                        ?>
+                                        <td class="table-dark" style="text-align: right;">
+                                            <b>
+                                                <?= number_format($total) ?>
+                                            </b>
+                                        </td>
+                                        <?php
+                                    endforeach;
+                                    ?>
+                                    <td class="table-dark" style="text-align: right;" colspan="1"><b>
+                                            <?= number_format($yearlyTotal) ?>
+                                        </b></td>
+                                </tr>
+                            <?php else: ?>
+                            <?php endif; ?>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
     </div>
-    <label for="year-filter">Filter Tahun:</label>
-    <select id="year-filter" class="form-select mx-2 my-3" style="width: 200px;">
-    <?php
-    $endYear = 2022;
-    echo '<option value="" disabled selected>Pilih Tahun</option>';
-    for ($year = 2021; $year <= $endYear; $year++) {
-        echo '<option value="' . $year . '">' . $year . '</option>';
-    }
-    ?>
-    </select>
-    <table id="menuTable" class="display">
-        <thead>
-            <tr>
-                <th>Menu</th>
-                <th>Jan</th>
-                <th>Feb</th>
-                <th>Mar</th>
-                <th>Apr</th>
-                <th>Mei</th>
-                <th>Jun</th>
-                <th>Jul</th>
-                <th>Agu</th>
-                <th>Sep</th>
-                <th>Okt</th>
-                <th>Nov</th>
-                <th>Des</th>
-                <th>Total</th>
-            </tr>
-        </thead>
-        <tbody>
-        </tbody>
-    </table>
-
-    <script>
-        $(document).ready(function() {
-            var menuData = [
-                {"menu":"Nasi Goreng","kategori":"makanan"},
-                {"menu":"Mie Freno","kategori":"makanan"},
-                {"menu":"Nasi Teriyaki","kategori":"makanan"},
-                {"menu":"Nasi Ayam Katsu","kategori":"makanan"},
-                {"menu":"Nasi Goreng Mawut","kategori":"makanan"},
-                {"menu":"Teh Hijau","kategori":"minuman"},
-                {"menu":"Teh Lemon","kategori":"minuman"},
-                {"menu":"Teh","kategori":"minuman"},
-                {"menu":"Kopi Hitam","kategori":"minuman"},
-                {"menu":"Kopi Susu","kategori":"minuman"}
-            ];
-
-            var transaksiData =  [
-                {"tanggal":"2021-01-01","menu":"Nasi Goreng","total":50000},{"tanggal":"2021-01-01","menu":"Teh Lemon","total":15000},{"tanggal":"2021-01-01","menu":"Teh Hijau","total":20000},{"tanggal":"2021-01-01","menu":"Mie Freno","total":10000},{"tanggal":"2021-01-01","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-01-01","menu":"Teh","total":3000},{"tanggal":"2021-01-01","menu":"Mie Freno","total":30000},{"tanggal":"2021-01-01","menu":"Kopi Susu","total":3000},{"tanggal":"2021-01-01","menu":"Kopi Hitam","total":12000},{"tanggal":"2021-01-01","menu":"Nasi Goreng Mawut","total":26000},{"tanggal":"2021-01-15","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-01-15","menu":"Teh Lemon","total":5000},{"tanggal":"2021-01-15","menu":"Teh Hijau","total":40000},{"tanggal":"2021-01-15","menu":"Teh","total":3000},{"tanggal":"2021-01-15","menu":"Nasi Ayam Katsu","total":40000},{"tanggal":"2021-01-15","menu":"Nasi Goreng","total":30000},{"tanggal":"2021-01-15","menu":"Kopi Susu","total":9000},{"tanggal":"2021-01-15","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-01-15","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2021-01-15","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-01-31","menu":"Nasi Ayam Katsu","total":20000},{"tanggal":"2021-01-31","menu":"Teh Lemon","total":15000},{"tanggal":"2021-01-31","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-01-31","menu":"Teh Lemon","total":15000},{"tanggal":"2021-01-31","menu":"Nasi Goreng","total":30000},{"tanggal":"2021-01-31","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-01-31","menu":"Kopi Susu","total":18000},{"tanggal":"2021-01-31","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-02-01","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-02-01","menu":"Teh","total":30000},{"tanggal":"2021-02-01","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2021-02-01","menu":"Mie Freno","total":20000},{"tanggal":"2021-02-01","menu":"Kopi Susu","total":21000},{"tanggal":"2021-02-01","menu":"Nasi Goreng","total":100000},{"tanggal":"2021-02-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-02-01","menu":"Teh Lemon","total":5000},{"tanggal":"2021-02-01","menu":"Nasi Goreng Mawut","total":39000},{"tanggal":"2021-02-01","menu":"Teh Lemon","total":10000},{"tanggal":"2021-02-01","menu":"Teh","total":6000},{"tanggal":"2021-02-15","menu":"Teh Hijau","total":50000},{"tanggal":"2021-02-15","menu":"Mie Freno","total":40000},{"tanggal":"2021-02-15","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-02-15","menu":"Teh Lemon","total":5000},{"tanggal":"2021-02-15","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-02-15","menu":"Kopi Susu","total":9000},{"tanggal":"2021-02-15","menu":"Nasi Teriyaki","total":26000},{"tanggal":"2021-02-15","menu":"Kopi Hitam","total":30000},{"tanggal":"2021-02-15","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-02-15","menu":"Kopi Hitam","total":12000},{"tanggal":"2021-02-28","menu":"Kopi Susu","total":3000},{"tanggal":"2021-02-28","menu":"Teh Lemon","total":25000},{"tanggal":"2021-02-28","menu":"Nasi Teriyaki","total":26000},{"tanggal":"2021-02-28","menu":"Kopi Susu","total":9000},{"tanggal":"2021-02-28","menu":"Teh Hijau","total":20000},{"tanggal":"2021-02-28","menu":"Teh","total":12000},{"tanggal":"2021-02-28","menu":"Teh","total":3000},{"tanggal":"2021-02-28","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-02-28","menu":"Teh Lemon","total":5000},{"tanggal":"2021-02-28","menu":"Nasi Goreng","total":40000},{"tanggal":"2021-03-01","menu":"Teh Lemon","total":10000},{"tanggal":"2021-03-01","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-03-01","menu":"Teh","total":9000},{"tanggal":"2021-03-01","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-03-01","menu":"Nasi Ayam Katsu","total":13000},{"tanggal":"2021-03-01","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-03-01","menu":"Teh Hijau","total":40000},{"tanggal":"2021-03-01","menu":"Teh","total":3000},{"tanggal":"2021-03-01","menu":"Nasi Teriyaki","total":26000},{"tanggal":"2021-03-01","menu":"Mie Freno","total":10000},{"tanggal":"2021-03-15","menu":"Kopi Hitam","total":9000},{"tanggal":"2021-03-15","menu":"Nasi Goreng","total":20000},{"tanggal":"2021-03-15","menu":"Teh","total":3000},{"tanggal":"2021-03-15","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-03-15","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2021-03-31","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-03-31","menu":"Mie Freno","total":40000},{"tanggal":"2021-03-31","menu":"Teh Hijau","total":50000},{"tanggal":"2021-03-31","menu":"Teh","total":3000},{"tanggal":"2021-03-31","menu":"Kopi Susu","total":9000},{"tanggal":"2021-03-31","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-03-31","menu":"Nasi Goreng Mawut","total":39000},{"tanggal":"2021-04-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-04-01","menu":"Teh","total":3000},{"tanggal":"2021-04-01","menu":"Mie Freno","total":10000},{"tanggal":"2021-04-01","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2021-04-01","menu":"Teh Hijau","total":10000},{"tanggal":"2021-04-01","menu":"Nasi Goreng","total":30000},{"tanggal":"2021-04-01","menu":"Teh Hijau","total":10000},{"tanggal":"2021-04-01","menu":"Mie Freno","total":10000},{"tanggal":"2021-04-01","menu":"Kopi Hitam","total":9000},{"tanggal":"2021-04-01","menu":"Nasi Goreng","total":20000},{"tanggal":"2021-04-01","menu":"Nasi Ayam Katsu","total":40000},{"tanggal":"2021-04-01","menu":"Kopi Susu","total":3000},{"tanggal":"2021-04-01","menu":"Nasi Ayam Katsu","total":30000},{"tanggal":"2021-04-15","menu":"Teh","total":9000},{"tanggal":"2021-04-15","menu":"Teh Lemon","total":5000},{"tanggal":"2021-04-15","menu":"Nasi Ayam Katsu","total":20000},{"tanggal":"2021-04-15","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-04-15","menu":"Teh","total":3000},{"tanggal":"2021-04-15","menu":"Kopi Susu","total":9000},{"tanggal":"2021-04-15","menu":"Kopi Hitam","total":12000},{"tanggal":"2021-04-15","menu":"Teh Hijau","total":50000},{"tanggal":"2021-04-15","menu":"Teh Hijau","total":20000},{"tanggal":"2021-04-15","menu":"Nasi Goreng","total":40000},{"tanggal":"2021-04-30","menu":"Teh","total":3000},{"tanggal":"2021-04-30","menu":"Mie Freno","total":50000},{"tanggal":"2021-04-30","menu":"Nasi Goreng Mawut","total":26000},{"tanggal":"2021-04-30","menu":"Teh Hijau","total":10000},{"tanggal":"2021-04-30","menu":"Teh Hijau","total":10000},{"tanggal":"2021-04-30","menu":"Teh Hijau","total":80000},{"tanggal":"2021-04-30","menu":"Kopi Hitam","total":12000},{"tanggal":"2021-04-30","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-04-30","menu":"Kopi Hitam","total":9000},{"tanggal":"2021-04-30","menu":"Kopi Hitam","total":6000},{"tanggal":"2021-04-30","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-04-30","menu":"Teh","total":3000},{"tanggal":"2021-05-01","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-05-01","menu":"Mie Freno","total":30000},{"tanggal":"2021-05-01","menu":"Teh","total":3000},{"tanggal":"2021-05-01","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2021-05-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-05-01","menu":"Teh Lemon","total":10000},{"tanggal":"2021-05-15","menu":"Teh","total":3000},{"tanggal":"2021-05-15","menu":"Mie Freno","total":10000},{"tanggal":"2021-05-15","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-05-15","menu":"Teh","total":3000},{"tanggal":"2021-05-15","menu":"Teh Lemon","total":25000},{"tanggal":"2021-05-15","menu":"Nasi Teriyaki","total":30000},{"tanggal":"2021-05-15","menu":"Kopi Susu","total":3000},{"tanggal":"2021-05-15","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-05-15","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-05-15","menu":"Kopi Hitam","total":6000},{"tanggal":"2021-05-15","menu":"Kopi Susu","total":15000},{"tanggal":"2021-05-31","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-05-31","menu":"Teh Lemon","total":10000},{"tanggal":"2021-05-31","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-05-31","menu":"Teh Hijau","total":10000},{"tanggal":"2021-05-31","menu":"Kopi Susu","total":6000},{"tanggal":"2021-05-31","menu":"Teh","total":3000},{"tanggal":"2021-05-31","menu":"Nasi Goreng Mawut","total":26000},{"tanggal":"2021-05-31","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-06-01","menu":"Teh Lemon","total":50000},{"tanggal":"2021-06-01","menu":"Kopi Hitam","total":1000},{"tanggal":"2021-06-01","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2021-06-01","menu":"Mie Freno","total":50000},{"tanggal":"2021-06-01","menu":"Teh Hijau","total":10000},{"tanggal":"2021-06-01","menu":"Kopi Susu","total":3000},{"tanggal":"2021-06-01","menu":"Nasi Goreng","total":5000},{"tanggal":"2021-06-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-06-01","menu":"Teh","total":3000},{"tanggal":"2021-06-15","menu":"Teh Hijau","total":10000},{"tanggal":"2021-06-15","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-06-15","menu":"Teh","total":30000},{"tanggal":"2021-06-15","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-06-15","menu":"Teh","total":3000},{"tanggal":"2021-06-15","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-06-15","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-06-15","menu":"Mie Freno","total":10000},{"tanggal":"2021-06-15","menu":"Teh Hijau","total":100000},{"tanggal":"2021-06-30","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-06-30","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-06-30","menu":"Kopi Susu","total":6000},{"tanggal":"2021-06-30","menu":"Nasi Goreng","total":40000},{"tanggal":"2021-06-30","menu":"Teh","total":3000},{"tanggal":"2021-06-30","menu":"Teh Hijau","total":10000},{"tanggal":"2021-06-30","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-06-30","menu":"Teh Hijau","total":20000},{"tanggal":"2021-06-30","menu":"Mie Freno","total":20000},{"tanggal":"2021-06-30","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-06-30","menu":"Teh","total":9000},{"tanggal":"2021-07-01","menu":"Teh","total":3000},{"tanggal":"2021-07-01","menu":"Kopi Susu","total":6000},{"tanggal":"2021-07-01","menu":"Teh Hijau","total":20000},{"tanggal":"2021-07-01","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2021-07-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-07-01","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-07-01","menu":"Teh","total":15000},{"tanggal":"2021-07-01","menu":"Nasi Goreng Mawut","total":39000},{"tanggal":"2021-07-01","menu":"Teh Hijau","total":20000},{"tanggal":"2021-07-01","menu":"Kopi Susu","total":6000},{"tanggal":"2021-07-01","menu":"Teh Lemon","total":25000},{"tanggal":"2021-07-01","menu":"Nasi Ayam Katsu","total":50000},{"tanggal":"2021-07-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-07-01","menu":"Teh Lemon","total":5000},{"tanggal":"2021-08-01","menu":"Nasi Goreng Mawut","total":78000},{"tanggal":"2021-08-01","menu":"Teh Hijau","total":10000},{"tanggal":"2021-08-01","menu":"Teh Lemon","total":10000},{"tanggal":"2021-08-01","menu":"Teh","total":18000},{"tanggal":"2021-08-01","menu":"Nasi Ayam Katsu","total":100000},{"tanggal":"2021-08-01","menu":"Nasi Ayam Katsu","total":30000},{"tanggal":"2021-08-01","menu":"Nasi Goreng Mawut","total":26000},{"tanggal":"2021-08-01","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-08-01","menu":"Kopi Hitam","total":15000},{"tanggal":"2021-08-01","menu":"Teh","total":6000},{"tanggal":"2021-09-01","menu":"Kopi Susu","total":3000},{"tanggal":"2021-09-01","menu":"Teh","total":9000},{"tanggal":"2021-09-01","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-09-01","menu":"Nasi Goreng","total":40000},{"tanggal":"2021-09-01","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-09-01","menu":"Teh Hijau","total":10000},{"tanggal":"2021-09-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-09-01","menu":"Teh Hijau","total":30000},{"tanggal":"2021-09-01","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-09-01","menu":"Mie Freno","total":50000},{"tanggal":"2021-09-01","menu":"Mie Freno","total":10000},{"tanggal":"2021-09-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-09-01","menu":"Kopi Hitam","total":21000},{"tanggal":"2021-10-01","menu":"Nasi Ayam Katsu","total":30000},{"tanggal":"2021-10-01","menu":"Nasi Teriyaki","total":26000},{"tanggal":"2021-10-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-10-01","menu":"Teh Lemon","total":5000},{"tanggal":"2021-10-01","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-10-01","menu":"Teh","total":3000},{"tanggal":"2021-10-01","menu":"Teh","total":6000},{"tanggal":"2021-10-01","menu":"Mie Freno","total":40000},{"tanggal":"2021-10-01","menu":"Nasi Goreng Mawut","total":26000},{"tanggal":"2021-10-01","menu":"Nasi Goreng","total":10000},{"tanggal":"2021-11-01","menu":"Nasi Ayam Katsu","total":20000},{"tanggal":"2021-11-01","menu":"Teh Lemon","total":25000},{"tanggal":"2021-11-01","menu":"Kopi Hitam","total":15000},{"tanggal":"2021-11-01","menu":"Teh","total":3000},{"tanggal":"2021-11-01","menu":"Nasi Goreng","total":40000},{"tanggal":"2021-11-01","menu":"Teh Hijau","total":10000},{"tanggal":"2021-11-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-11-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-11-01","menu":"Teh Hijau","total":10000},{"tanggal":"2021-11-01","menu":"Kopi Susu","total":15000},{"tanggal":"2021-11-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-12-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-12-01","menu":"Teh","total":3000},{"tanggal":"2021-12-01","menu":"Nasi Goreng","total":30000},{"tanggal":"2021-12-01","menu":"Teh Hijau","total":30000},{"tanggal":"2021-12-01","menu":"Nasi Goreng Mawut","total":13000},{"tanggal":"2021-12-01","menu":"Kopi Susu","total":15000},{"tanggal":"2021-12-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2021-12-01","menu":"Nasi Ayam Katsu","total":10000},{"tanggal":"2021-12-01","menu":"Teh","total":3000},{"tanggal":"2021-12-01","menu":"Nasi Ayam Katsu","total":10000}, {"tanggal":"2022-01-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2022-01-01","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2022-01-01","menu":"Teh","total":12000},{"tanggal":"2022-01-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2022-01-01","menu":"Kopi Hitam","total":3000},{"tanggal":"2022-01-01","menu":"Mie Freno","total":20000},{"tanggal":"2022-01-01","menu":"Nasi Goreng","total":30000},{"tanggal":"2022-01-01","menu":"Nasi Goreng Mawut","total":26000},{"tanggal":"2022-01-01","menu":"Nasi Teriyaki","total":13000},{"tanggal":"2022-01-01","menu":"Nasi Goreng","total":10000},{"tanggal":"2022-01-01","menu":"Nasi Teriyaki","total":39000},{"tanggal":"2022-01-01","menu":"Kopi Hitam","total":3000}]
-            
-
-            function formatRupiah(number) {
-            if (typeof number !== 'number') {
-                throw new Error('Input harus berupa angka.');
-            }
-            
-            const rupiah = new Intl.NumberFormat('id-ID', {
-                style: 'currency',
-                currency: 'IDR',
-                minimumFractionDigits: 0,
-            }).format(number);
-            
-            return rupiah;
-            }
-
-
-            function populateTable(year) {
-                $('#menuTable tbody').empty();
-                var menuCategories = menuData.map(item => item.menu);
-                var makananTotal = Array(12).fill(0);
-                var minumanTotal = Array(12).fill(0);
-                
-                menuCategories.forEach(menu => {
-                    var row = '<tr><td>' + menu +    '</td>';
-                    for (var i = 1; i <= 12; i++) {
-                        var total = 0;
-                        transaksiData.forEach(transaksi => {
-                            if (transaksi.menu === menu && transaksi.tanggal.startsWith(year + '-' + (i < 10 ? '0' : '') + i)) {
-                                total += transaksi.total;
-                            }
-                        });
-                        row += '<td>' + formatRupiah(total) + '</td>';
-
-                        // Update category totals
-                        if (menuData.find(item => item.menu === menu && item.kategori === "makanan")) {
-                            makananTotal[i - 1] += total;
-                        } else {
-                            minumanTotal[i - 1] += total;
-                        }
-                    }
-                    row += '</tr>';
-                    $('#menuTable tbody').append(row);
-                });
-
-                // Add category total rows
-                var allTotalRow = '<tr class="bg-secondary"><td>Total Keseluruhan</td>';
-                for (var i = 0; i < 12; i++) {
-                    var allTotal= Number(minumanTotal[i])+Number(makananTotal[i]);
-                    allTotalRow += '<td>' + formatRupiah(allTotal) + '</td>';
-                }
-                allTotalRow += '</tr>';
-                $('#menuTable tbody').append(allTotalRow);
-            }
-
-            $('#year-filter').change(function() {
-                var selectedYear = $('#year-filter').val();
-                populateTable(selectedYear);
-            });
-
-            var currentYear = new Date().getFullYear();
-            $('#year-filter').val(currentYear);
-            populateTable(currentYear);
-
-            $('#menuTable').DataTable();
-        });
-    </script>
 </body>
-</html>
-</body>
+
 </html>
